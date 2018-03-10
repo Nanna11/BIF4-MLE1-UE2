@@ -70,3 +70,54 @@ public class InstanceDoesNotExistException : Exception
     {
     }
 }
+
+public class AttributeInvalidException : Exception
+{
+    public AttributeInvalidException()
+    {
+    }
+
+    public AttributeInvalidException(string message)
+        : base(message)
+    {
+    }
+
+    public AttributeInvalidException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
+}
+
+public class CorrectAttributeCannotBeCorrectedException : Exception
+{
+    public CorrectAttributeCannotBeCorrectedException()
+    {
+    }
+
+    public CorrectAttributeCannotBeCorrectedException(string message)
+        : base(message)
+    {
+    }
+
+    public CorrectAttributeCannotBeCorrectedException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
+}
+
+public class NumberOfInstancesTooSmallException : Exception
+{
+    public NumberOfInstancesTooSmallException()
+    {
+    }
+
+    public NumberOfInstancesTooSmallException(string message)
+        : base(message)
+    {
+    }
+
+    public NumberOfInstancesTooSmallException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
+}
