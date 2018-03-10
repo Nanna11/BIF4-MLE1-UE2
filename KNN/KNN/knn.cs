@@ -68,5 +68,16 @@ namespace KNN
 
             sr.Close();
         }
+
+        private double Statistic()
+        {
+            return 0;
+        }
+
+        private void DetectOutlier()
+        {
+            // give index get value
+            // getattributes 
+        }
     }
 }

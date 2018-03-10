@@ -27,6 +27,14 @@ namespace KNN
             else throw new AttributeDoesNotExistException();
         }
 
+        public int Count
+        {
+            get
+            {
+                return _attributes.Count;
+            }
+        }
+
         public int Result
         {
             get
