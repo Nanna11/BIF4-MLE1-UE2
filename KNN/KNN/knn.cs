@@ -21,19 +21,24 @@ namespace KNN
         public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false)
         {
             filename = Filename;
+            if (string.IsNullOrEmpty(Seperator)) throw new ArgumentException("Seperator cannot be null or empty");
             seperator = Seperator;
+            if (Resultposition < 0) throw new ArgumentException("Resultposition cannot be smaller than 0");
             resultposition = Resultposition;
+            if (K <= 0) throw new ArgumentException("k cannnot be 0");
             k = K;
             hasheading = hasHeading;
 
             ReadData();
+            if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
+            PadData();
         }
 
         private void ReadData()
         {
             string deploypath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string filepath = Path.Combine(deploypath, filename);
-            FileStream file = new FileStream(filepath, FileMode.Open);
+            FileStream file = new FileStream(filepath, FileMode.Open); //ADD ERRORHANDLING HERE!!!!
             StreamReader sr = new StreamReader(file);
             if (hasheading) sr.ReadLine(); //read and discard headingline if necessary
 
@@ -54,6 +59,11 @@ namespace KNN
                         i.AddAttribute(value);
                         attcount++;
                     }
+                    else
+                    {
+                        i.AddInvalid();
+                        attcount++;
+                    }
                     if (attributecount == -1) attributecount = attcount;
                     else
                     {
@@ -67,6 +77,11 @@ namespace KNN
             }
 
             sr.Close();
+        }
+
+        void PadData()
+        {
+
         }
     }
 }

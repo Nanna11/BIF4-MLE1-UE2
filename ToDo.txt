@@ -1,0 +1,6 @@
+- fehlende attribute auffüllen
+- ausreißer aussortieren
+- katrgoriseiren
+- packages einteilen
+- testen
+- confusion
