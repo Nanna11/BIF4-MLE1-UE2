@@ -20,6 +20,8 @@ namespace KNN
         Results results = new Results();
         Package allInstances = new Package();
         Dictionary<int, Package> InstancesSortedByResult = new Dictionary<int, Package>();
+        List<Package> TestPackages = new List<Package>();
+        int[,] ConfusionMatrix;
 
         public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, string DecimalSeperator = ",", string ThousandsSeperator = "")
         {
@@ -36,8 +38,15 @@ namespace KNN
 
             ReadData();
             if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
-            SortDataByResult();
+            SortDataByResult(); //nach Ausreisser aussortieren!!
             PadData();
+        }
+
+        public void Test()
+        {
+            DivideData();
+            ConfusionMatrix = new int[results.Count,results.Count];
+            KFCTestPackages();
         }
 
         private void ReadData()
@@ -178,6 +187,41 @@ namespace KNN
             for(int i = 0; i < allInstances.Count; i++)
             {
                 InstancesSortedByResult[allInstances.GetInstance(i).Result].AddInstance(allInstances.GetInstance(i));
+            }
+        }
+
+        void DivideData()
+        {
+            for(int i = 0; i < k; i++)
+            {
+                TestPackages.Add(new Package());
+            }
+            for(int i = 0; i < InstancesSortedByResult.Count; i++)
+            {
+                for(int j = 0; j < InstancesSortedByResult[i].Count; j++)
+                {
+                    TestPackages[j % k].AddInstance(InstancesSortedByResult[i].GetInstance(j));
+                }
+            }
+        }
+
+        double EuclideanDistance(Instance i, Instance j)
+        {
+            double sum = 0;
+            for(int k = 0; k < i.Count; k++)
+            {
+                sum += Math.Pow((i.GetAttribute(k) - j.GetAttribute(k)), 2);
+            }
+
+            return Math.Sqrt(sum);
+        }
+
+        void KFCTestPackages()
+        {
+            for(int i = 0; i < TestPackages.Count; i++)
+            {
+                List<Package> ToLearn = TestPackages.Except(new List<Package>() { TestPackages.ElementAt(i) }).ToList<Package>();
+
             }
         }
     }
