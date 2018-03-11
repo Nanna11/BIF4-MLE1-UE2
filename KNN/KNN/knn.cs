@@ -16,24 +16,41 @@ namespace KNN
         int k;
         bool hasheading;
         int strict;
+        string decimalSeperator;
+        string thousandsSeperator;
+
         Results results = new Results();
         Package allInstances = new Package();
+        Dictionary<int, Package> InstancesSortedByResult = new Dictionary<int, Package>();
+        List<Package> TestPackages = new List<Package>();
+        int[,] ConfusionMatrix;
 
-        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, int OutlierStrictness = 2)
+        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, int OutlierStrictness = 2, string DecimalSeperator = ",", string ThousandsSeperator = "")
         {
             filename = Filename;
             if (string.IsNullOrEmpty(Seperator)) throw new ArgumentException("Seperator cannot be null or empty");
             seperator = Seperator;
             if (Resultposition < 0) throw new ArgumentException("Resultposition cannot be smaller than 0");
             resultposition = Resultposition;
-            if (K <= 0) throw new ArgumentException("k cannnot be 0");
+            if (K <= 0) throw new ArgumentException("k cannot be 0");
             k = K;
             hasheading = hasHeading;
             strict = OutlierStrictness;
+            decimalSeperator = DecimalSeperator;
+            thousandsSeperator = ThousandsSeperator;
 
             ReadData();
             if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
+            DetectOutlier();
+            SortDataByResult(); //nach Ausreisser aussortieren!!
             PadData();
+        }
+
+        public void Test()
+        {
+            DivideData();
+            ConfusionMatrix = new int[results.Count,results.Count];
+            KFCTestPackages();
         }
 
         private void ReadData()
@@ -56,7 +73,10 @@ namespace KNN
                 {
                     if (j == resultposition) continue;
                     double value;
-                    if(double.TryParse(attributes[j], out value))
+                    string attribute = attributes[j];
+                    if (!string.IsNullOrEmpty(thousandsSeperator)) attribute = attribute.Replace(thousandsSeperator, "");
+                    if (!string.IsNullOrEmpty(decimalSeperator)) attribute = attribute.Replace(decimalSeperator, ",");
+                    if (double.TryParse(attribute, out value))
                     {
                         i.AddAttribute(value);
                         attcount++;
@@ -66,14 +86,18 @@ namespace KNN
                         i.AddInvalid();
                         attcount++;
                     }
+                }
 
-                    if (attributecount == -1) attributecount = attcount;
-                    else
+                if (attributecount == -1)
+                {
+                    attributecount = attcount;
+                    allInstances.AddInstance(i);
+                }
+                else
+                {
+                    if (attcount == attributecount)
                     {
-                        if(attcount == attributecount)
-                        {
-                            allInstances.AddInstance(i);
-                        }
+                        allInstances.AddInstance(i);
                     }
                 }
 
@@ -82,16 +106,16 @@ namespace KNN
             sr.Close();
         }
 
-        private double Average(int index)
+        private double Average(int index, Package p)
         {
             double sum = 0;
             int count = 0;
 
-            for(int i = 0; i < allInstances.Count; i++)
+            for(int i = 0; i < p.Count; i++)
             {
                 try
                 {
-                    sum += allInstances.GetInstance(i).GetAttribute(index);
+                    sum += p.GetInstance(i).GetAttribute(index);
                     count++;
                 }
                 catch (AttributeInvalidException)
@@ -104,18 +128,18 @@ namespace KNN
             else return 0;
         }
 
-        private double StandardDeviation(int index)
+        private double StandardDeviation(int index, Package p)
         {
-            double avg = Average(index);
+            double avg = Average(index, p);
             double differentialsum = 0;
 
-            for (int i = 0; i < allInstances.Count; i++)
+            for (int i = 0; i < p.Count; i++)
             {
-                differentialsum += Math.Pow((allInstances.GetInstance(i).GetAttribute(index) - avg), 2);
+                differentialsum += Math.Pow((p.GetInstance(i).GetAttribute(index) - avg), 2);
             }
 
-            if (allInstances.Count < 2) return 0;
-            else return Math.Sqrt(differentialsum / (allInstances.Count - 1));
+            if (p.Count < 2) return 0;
+            else return Math.Sqrt(differentialsum / (p.Count - 1));
         }
 
         private void DetectOutlier()
@@ -140,25 +164,82 @@ namespace KNN
 
         void PadData()
         {
-            for(int i = 0; i < allInstances.GetInstance(0).Count; i++)
+            for(int i = 0; i < InstancesSortedByResult.Count; i++)
             {
-                PadAttribute(i);
+                PadPackage(InstancesSortedByResult[i]);
             }
         }
 
-        void PadAttribute(int index)
+        void PadPackage(Package p)
         {
-            double avg = Average(index);
-            for (int i = 0; i < allInstances.Count; i++)
+            for (int i = 0; i < allInstances.GetInstance(0).Count; i++)
+            {
+                PadAttribute(i, p);
+            }
+        }
+
+        void PadAttribute(int index, Package p)
+        {
+            double avg = Average(index, p);
+            Console.WriteLine("Package {0} Attribute {1}: {2}", results.Result(p.GetInstance(0).Result), index, avg);
+            for (int i = 0; i < p.Count; i++)
             {
                 try
                 {
-                    allInstances.GetInstance(i).ReviseAttribute(index, avg);
+                    p.GetInstance(i).ReviseAttribute(index, avg);
                 }
                 catch (CorrectAttributeCannotBeCorrectedException)
                 {
                     continue;
                 }
+            }
+        }
+
+        void SortDataByResult()
+        {
+            for(int i = 0; i < results.Count; i++)
+            {
+                InstancesSortedByResult.Add(i, new Package());
+            }
+
+            for(int i = 0; i < allInstances.Count; i++)
+            {
+                InstancesSortedByResult[allInstances.GetInstance(i).Result].AddInstance(allInstances.GetInstance(i));
+            }
+        }
+
+        void DivideData()
+        {
+            for(int i = 0; i < k; i++)
+            {
+                TestPackages.Add(new Package());
+            }
+            for(int i = 0; i < InstancesSortedByResult.Count; i++)
+            {
+                for(int j = 0; j < InstancesSortedByResult[i].Count; j++)
+                {
+                    TestPackages[j % k].AddInstance(InstancesSortedByResult[i].GetInstance(j));
+                }
+            }
+        }
+
+        double EuclideanDistance(Instance i, Instance j)
+        {
+            double sum = 0;
+            for(int k = 0; k < i.Count; k++)
+            {
+                sum += Math.Pow((i.GetAttribute(k) - j.GetAttribute(k)), 2);
+            }
+
+            return Math.Sqrt(sum);
+        }
+
+        void KFCTestPackages()
+        {
+            for(int i = 0; i < TestPackages.Count; i++)
+            {
+                List<Package> ToLearn = TestPackages.Except(new List<Package>() { TestPackages.ElementAt(i) }).ToList<Package>();
+
             }
         }
     }
