@@ -41,7 +41,7 @@ namespace KNN
 
             ReadData();
             if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
-            DetectOutlier();
+            //DetectOutlier();
             SortDataByResult(); //nach Ausreisser aussortieren!!
             PadData();
         }
@@ -289,6 +289,18 @@ namespace KNN
                 return HighestResultCounts[r];
             }
             
+        }
+
+        public void DisplayConfusionMatrix()
+        {
+            for(int i = 0; i < results.Count; i++)
+            {
+                for(int j = 0; j < results.Count; j++)
+                {
+                    Console.Write("{0} ", ConfusionMatrix[i,j]);
+                }
+                Console.WriteLine("");
+            }
         }
     }
 }

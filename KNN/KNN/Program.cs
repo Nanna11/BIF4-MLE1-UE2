@@ -10,7 +10,9 @@ namespace KNN
     {
         static void Main(string[] args)
         {
-            knn k = new knn("bezdekIris.data", ",", 4, 10, false, 2, ".");
+            knn k = new knn("winequality-white.csv", ";", 11, 3, true, 2, ".");
+            k.Test();
+            k.DisplayConfusionMatrix();
             Console.ReadKey();
         }
     }
