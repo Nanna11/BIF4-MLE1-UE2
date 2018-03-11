@@ -80,14 +80,40 @@ namespace KNN
             sr.Close();
         }
 
-        private double Statistic1()
+        private double Average(int index)
         {
-            return 0;
+            double sum = 0;
+            int count = 0;
+
+            for(int i = 0; i < allInstances.Count; i++)
+            {
+                try
+                {
+                    sum += allInstances.GetInstance(i).GetAttribute(index);
+                    count++;
+                }
+                catch (AttributeInvalidException)
+                {
+                    continue;
+                }
+            }
+
+            if (count > 0) return sum / count;
+            else return 0;
         }
 
-        private double Statistic2()
+        private double StandardDeviation(int index)
         {
-            return 0;
+            double avg = Average(index);
+            double differentialsum = 0;
+
+            for (int i = 0; i < allInstances.Count; i++)
+            {
+                differentialsum += Math.Pow((allInstances.GetInstance(i).GetAttribute(index) - avg), 2);
+            }
+
+            if (allInstances.Count < 2) return 0;
+            else return Math.Sqrt(differentialsum / (allInstances.Count - 1));
         }
 
         private void DetectOutlier()
@@ -108,7 +134,26 @@ namespace KNN
 
         void PadData()
         {
+            for(int i = 0; i < allInstances.GetInstance(0).Count; i++)
+            {
+                PadAttribute(i);
+            }
+        }
 
+        void PadAttribute(int index)
+        {
+            double avg = Average(index);
+            for (int i = 0; i < allInstances.Count; i++)
+            {
+                try
+                {
+                    allInstances.GetInstance(i).ReviseAttribute(index, avg);
+                }
+                catch (CorrectAttributeCannotBeCorrectedException)
+                {
+                    continue;
+                }
+            }
         }
     }
 }
