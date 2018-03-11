@@ -64,6 +64,7 @@ namespace KNN
                         i.AddInvalid();
                         attcount++;
                     }
+
                     if (attributecount == -1) attributecount = attcount;
                     else
                     {
@@ -93,7 +94,16 @@ namespace KNN
         {
             // give index to statistic1 and statistic2 to get value
             // getattributes from instance
+            double avg = Statistic1();
+            double devi = Statistic2();
+            for (int i = 0; i < allInstances.Count; i++)
+            {
+                Instance instance = allInstances.GetInstance(i);
+                for (int iatt = 0; iatt < instance.Count; iatt++)
+                {
 
+                }
+            }
         }
 
         void PadData()
