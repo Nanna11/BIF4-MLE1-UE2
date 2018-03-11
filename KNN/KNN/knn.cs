@@ -15,29 +15,33 @@ namespace KNN
         int resultposition;
         int k;
         bool hasheading;
+        int strict;
         string decimalSeperator;
         string thousandsSeperator;
+
         Results results = new Results();
         Package allInstances = new Package();
         Dictionary<int, Package> InstancesSortedByResult = new Dictionary<int, Package>();
         List<Package> TestPackages = new List<Package>();
         int[,] ConfusionMatrix;
 
-        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, string DecimalSeperator = ",", string ThousandsSeperator = "")
+        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, int OutlierStrictness = 2, string DecimalSeperator = ",", string ThousandsSeperator = "")
         {
             filename = Filename;
             if (string.IsNullOrEmpty(Seperator)) throw new ArgumentException("Seperator cannot be null or empty");
             seperator = Seperator;
             if (Resultposition < 0) throw new ArgumentException("Resultposition cannot be smaller than 0");
             resultposition = Resultposition;
-            if (K <= 0) throw new ArgumentException("k cannnot be 0");
+            if (K <= 0) throw new ArgumentException("k cannot be 0");
             k = K;
             hasheading = hasHeading;
+            strict = OutlierStrictness;
             decimalSeperator = DecimalSeperator;
             thousandsSeperator = ThousandsSeperator;
 
             ReadData();
             if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
+            DetectOutlier();
             SortDataByResult(); //nach Ausreisser aussortieren!!
             PadData();
         }
@@ -83,6 +87,7 @@ namespace KNN
                         attcount++;
                     }
                 }
+
                 if (attributecount == -1)
                 {
                     attributecount = attcount;
@@ -139,9 +144,22 @@ namespace KNN
 
         private void DetectOutlier()
         {
-            // give index to statistic1 and statistic2 to get value
-            // getattributes from instance
+            for (int i = 0; i < allInstances.Count; i++)
+            {
+                double avg = 0;
+                double devi = 0;
 
+                Instance instance = allInstances.GetInstance(i);
+                for (int iatt = 0; iatt < instance.Count; iatt++)
+                {
+                    double attr = instance.GetAttribute(iatt);
+                    if (attr > (avg + (devi*strict)))
+                    {
+                        allInstances.DeleteInstance(i);
+                        i--;
+                    }
+                }
+            }
         }
 
         void PadData()

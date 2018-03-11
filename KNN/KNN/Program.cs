@@ -10,7 +10,7 @@ namespace KNN
     {
         static void Main(string[] args)
         {
-            knn k = new knn("bezdekIris.data", ",", 4, 10, false, ".");
+            knn k = new knn("bezdekIris.data", ",", 4, 10, false, 2, ".");
             Console.ReadKey();
         }
     }
