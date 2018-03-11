@@ -41,8 +41,9 @@ namespace KNN
 
             ReadData();
             if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
+            SortDataByResult();
             DetectOutlier();
-            SortDataByResult(); //nach Ausreisser aussortieren!!
+            SortDataByResult();
             PadData();
         }
 
@@ -144,19 +145,27 @@ namespace KNN
 
         private void DetectOutlier()
         {
-            for (int i = 0; i < allInstances.Count; i++)
+            allInstances.Clear();
+            for (int i = 0; i < InstancesSortedByResult.Count; i++)
             {
-                double avg = 0;
-                double devi = 0;
+                DetectOutlierPerPackage(InstancesSortedByResult[i]);
+            }
+        }
 
-                Instance instance = allInstances.GetInstance(i);
+        private void DetectOutlierPerPackage(Package p)
+        {
+            for (int i = 0; i < p.Count; i++)
+            {
+                Instance instance = p.GetInstance(i);
                 for (int iatt = 0; iatt < instance.Count; iatt++)
                 {
+                    double avg = Average(i, p);
+                    double devi = StandardDeviation(i, p);
+
                     double attr = instance.GetAttribute(iatt);
-                    if (attr > (avg + (devi*strict)))
+                    if (attr < (avg + (devi*strict)))
                     {
-                        allInstances.DeleteInstance(i);
-                        i--;
+                        allInstances.AddInstance(instance);
                     }
                 }
             }
@@ -197,6 +206,7 @@ namespace KNN
 
         void SortDataByResult()
         {
+            if (InstancesSortedByResult.Any()) InstancesSortedByResult.Clear();
             for(int i = 0; i < results.Count; i++)
             {
                 InstancesSortedByResult.Add(i, new Package());
