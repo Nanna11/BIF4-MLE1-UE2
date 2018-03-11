@@ -41,8 +41,9 @@ namespace KNN
 
             ReadData();
             if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
-            //DetectOutlier();
-            SortDataByResult(); //nach Ausreisser aussortieren!!
+            SortDataByResult();
+            DetectOutlier();
+            SortDataByResult();
             PadData();
         }
 
@@ -144,19 +145,35 @@ namespace KNN
 
         private void DetectOutlier()
         {
-            for (int i = 0; i < allInstances.Count; i++)
+            allInstances.Clear();
+            for (int i = 0; i < InstancesSortedByResult.Count; i++)
             {
-                double avg = 0;
-                double devi = 0;
+                DetectOutlierPerPackage(i, InstancesSortedByResult[i]);
+            }
+        }
 
-                Instance instance = allInstances.GetInstance(i);
+        private void DetectOutlierPerPackage(int pNr, Package p)
+        {
+            Dictionary<int, double> avg = new Dictionary<int, double>();
+            Dictionary<int, double> devi = new Dictionary<int, double>();
+
+            for (int i = 0; i < p.Count; i++)
+            {
+                Instance instance = p.GetInstance(i);
                 for (int iatt = 0; iatt < instance.Count; iatt++)
                 {
-                    double attr = instance.GetAttribute(iatt);
-                    if (attr > (avg + (devi*strict)))
+                    if (!avg.ContainsKey(iatt) || !devi.ContainsKey(iatt))
                     {
-                        allInstances.DeleteInstance(i);
-                        i--;
+                        double average = Average(iatt, p);
+                        avg.Add(iatt, average);
+                        double deviation = StandardDeviation(iatt, p);
+                        devi.Add(iatt, deviation);
+                    }
+
+                    double attr = instance.GetAttribute(iatt);
+                    if (attr < (avg[iatt] + (devi[iatt] * strict)) && attr > (avg[iatt] - (devi[iatt] * strict)))
+                    {
+                        allInstances.AddInstance(instance);
                     }
                 }
             }
@@ -197,6 +214,7 @@ namespace KNN
 
         void SortDataByResult()
         {
+            if (InstancesSortedByResult.Any()) InstancesSortedByResult.Clear();
             for(int i = 0; i < results.Count; i++)
             {
                 InstancesSortedByResult.Add(i, new Package());

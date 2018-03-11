@@ -33,6 +33,12 @@ namespace KNN
             else throw new InstanceDoesNotExistException();
         }
 
+        public void Clear()
+        {
+            _instances.Clear();
+            _instanceNodes.Clear();
+        }
+
         public int Count
         {
             get
