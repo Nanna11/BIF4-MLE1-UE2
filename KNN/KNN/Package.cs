@@ -44,7 +44,17 @@ namespace KNN
         static public Package Concat(Package i, Package j)
         {
             Package p = new Package();
-            return null;
+            for(int k = 0; k < i.Count; k++)
+            {
+                p.AddInstance(i.GetInstance(k));
+            }
+
+            for (int k = 0; k < j.Count; k++)
+            {
+                p.AddInstance(j.GetInstance(k));
+            }
+
+            return p;
         }
     }
 }

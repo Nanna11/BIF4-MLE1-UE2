@@ -245,19 +245,50 @@ namespace KNN
 
         void TestPackage(List<Package> tl, Package tt)
         {
-            for(int i = 0; i < tl.Count; i++)
+            Package p = new Package();
+            for (int i = 0; i < tl.Count; i++)
             {
-                
+                p = Package.Concat(p, tl[i]);
             }
+
+
             for(int i = 0; i < tt.Count; i++)
             {
-                //int y = Classify(tt.GetInstance(i), tl);
+                int y = Classify(tt.GetInstance(i), p);
+                ConfusionMatrix[tt.GetInstance(i).Result, y]++;
             }
         }
 
         int Classify(Instance i, Package p)
         {
-            return 0;
+            Dictionary<Instance, double> Distances = new Dictionary<Instance, double>();
+            for(int j = 0; j < p.Count; j++)
+            {
+                Distances.Add(p.GetInstance(j), EuclideanDistance(i, p.GetInstance(j)));
+            }
+
+            List<Instance> Sorted = (from entry in Distances orderby entry.Value ascending select entry.Key).ToList<Instance>();
+            int[] ResultCount = new int[results.Count];
+            for(int j = 0; j < k; j++)
+            {
+                ResultCount[Sorted.ElementAt(j).Result]++;
+            }
+
+            int Max = ResultCount.Max();
+            List<int> HighestResultCounts = new List<int>();
+            for(int j = 0; j < ResultCount.Length; j++)
+            {
+                if (ResultCount[j] == Max) HighestResultCounts.Add(j);
+            }
+
+            if (HighestResultCounts.Count == 1) return HighestResultCounts[0];
+            else
+            {
+                Random rnd = new Random();
+                int r = rnd.Next(HighestResultCounts.Count);
+                return HighestResultCounts[r];
+            }
+            
         }
     }
 }
