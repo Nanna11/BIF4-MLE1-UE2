@@ -15,10 +15,11 @@ namespace KNN
         int resultposition;
         int k;
         bool hasheading;
+        int strict;
         Results results = new Results();
         Package allInstances = new Package();
 
-        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false)
+        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, int OutlierStrictness = 2)
         {
             filename = Filename;
             if (string.IsNullOrEmpty(Seperator)) throw new ArgumentException("Seperator cannot be null or empty");
@@ -28,6 +29,7 @@ namespace KNN
             if (K <= 0) throw new ArgumentException("k cannnot be 0");
             k = K;
             hasheading = hasHeading;
+            strict = OutlierStrictness;
 
             ReadData();
             if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
@@ -118,16 +120,20 @@ namespace KNN
 
         private void DetectOutlier()
         {
-            // give index to statistic1 and statistic2 to get value
-            // getattributes from instance
-            double avg = Statistic1();
-            double devi = Statistic2();
             for (int i = 0; i < allInstances.Count; i++)
             {
+                double avg = 0;
+                double devi = 0;
+
                 Instance instance = allInstances.GetInstance(i);
                 for (int iatt = 0; iatt < instance.Count; iatt++)
                 {
-
+                    double attr = instance.GetAttribute(iatt);
+                    if (attr > (avg + (devi*strict)))
+                    {
+                        allInstances.DeleteInstance(i);
+                        i--;
+                    }
                 }
             }
         }
