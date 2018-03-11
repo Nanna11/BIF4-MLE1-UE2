@@ -221,8 +221,25 @@ namespace KNN
             for(int i = 0; i < TestPackages.Count; i++)
             {
                 List<Package> ToLearn = TestPackages.Except(new List<Package>() { TestPackages.ElementAt(i) }).ToList<Package>();
-
+                TestPackage(ToLearn, TestPackages[i]);
             }
+        }
+
+        void TestPackage(List<Package> tl, Package tt)
+        {
+            for(int i = 0; i < tl.Count; i++)
+            {
+                
+            }
+            for(int i = 0; i < tt.Count; i++)
+            {
+                //int y = Classify(tt.GetInstance(i), tl);
+            }
+        }
+
+        int Classify(Instance i, Package p)
+        {
+            return 0;
         }
     }
 }

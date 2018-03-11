@@ -28,5 +28,11 @@ namespace KNN
                 return _instances.Count;
             }
         }
+
+        static public Package Concat(Package i, Package j)
+        {
+            Package p = new Package();
+            return null;
+        }
     }
 }
