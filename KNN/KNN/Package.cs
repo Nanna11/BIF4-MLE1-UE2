@@ -46,5 +46,21 @@ namespace KNN
                 return _instances.Count;
             }
         }
+
+        static public Package Concat(Package i, Package j)
+        {
+            Package p = new Package();
+            for(int k = 0; k < i.Count; k++)
+            {
+                p.AddInstance(i.GetInstance(k));
+            }
+
+            for (int k = 0; k < j.Count; k++)
+            {
+                p.AddInstance(j.GetInstance(k));
+            }
+
+            return p;
+        }
     }
 }
