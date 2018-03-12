@@ -15,7 +15,7 @@ namespace KNN
         int resultposition;
         int k;
         bool hasheading;
-        int strict;
+        double strict;
         string decimalSeperator;
         string thousandsSeperator;
 
@@ -25,7 +25,7 @@ namespace KNN
         List<Package> TestPackages = new List<Package>();
         int[,] ConfusionMatrix;
 
-        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, int OutlierStrictness = 2, string DecimalSeperator = ",", string ThousandsSeperator = "")
+        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, double OutlierStrictness = 2, string DecimalSeperator = ",", string ThousandsSeperator = "")
         {
             filename = Filename;
             if (string.IsNullOrEmpty(Seperator)) throw new ArgumentException("Seperator cannot be null or empty");
@@ -160,6 +160,7 @@ namespace KNN
             for (int i = 0; i < p.Count; i++)
             {
                 Instance instance = p.GetInstance(i);
+                bool ok = true;
                 for (int iatt = 0; iatt < instance.Count; iatt++)
                 {
                     if (!avg.ContainsKey(iatt) || !devi.ContainsKey(iatt))
@@ -173,8 +174,17 @@ namespace KNN
                     double attr = instance.GetAttribute(iatt);
                     if (attr < (avg[iatt] + (devi[iatt] * strict)) && attr > (avg[iatt] - (devi[iatt] * strict)))
                     {
-                        allInstances.AddInstance(instance);
+                        ok = true;
                     }
+                    else
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok)
+                {
+                    allInstances.AddInstance(instance);
                 }
             }
         }
