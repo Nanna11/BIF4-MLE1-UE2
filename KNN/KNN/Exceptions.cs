@@ -121,3 +121,20 @@ public class NumberOfInstancesTooSmallException : Exception
     {
     }
 }
+
+public class WrongNumberOfAttributesException : Exception
+{
+    public WrongNumberOfAttributesException()
+    {
+    }
+
+    public WrongNumberOfAttributesException(string message)
+        : base(message)
+    {
+    }
+
+    public WrongNumberOfAttributesException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
+}

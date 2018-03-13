@@ -48,7 +48,6 @@ namespace KNN
                 _attributes.Remove(_invalidattributes[index]);
                 _invalidattributes.Remove(index);
             }
-            else throw new CorrectAttributeCannotBeCorrectedException();
         }
 
         public void AddInvalid()

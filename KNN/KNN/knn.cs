@@ -13,7 +13,6 @@ namespace KNN
         string filename;
         string seperator;
         int resultposition;
-        int k;
         bool hasheading;
         double strict;
         string decimalSeperator;
@@ -25,33 +24,32 @@ namespace KNN
         List<Package> TestPackages = new List<Package>();
         int[,] ConfusionMatrix;
 
-        public knn(string Filename, string Seperator, int Resultposition, int K, bool hasHeading = false, double OutlierStrictness = 2, string DecimalSeperator = ",", string ThousandsSeperator = "")
+        public knn(string Filename, string Seperator, int Resultposition, bool hasHeading = false, double OutlierStrictness = 2, string DecimalSeperator = ",", string ThousandsSeperator = "")
         {
             filename = Filename;
             if (string.IsNullOrEmpty(Seperator)) throw new ArgumentException("Seperator cannot be null or empty");
             seperator = Seperator;
             if (Resultposition < 0) throw new ArgumentException("Resultposition cannot be smaller than 0");
             resultposition = Resultposition;
-            if (K <= 0) throw new ArgumentException("k cannot be 0");
-            k = K;
             hasheading = hasHeading;
             strict = OutlierStrictness;
             decimalSeperator = DecimalSeperator;
             thousandsSeperator = ThousandsSeperator;
 
             ReadData();
-            if (allInstances.Count < k) throw new NumberOfInstancesTooSmallException("Number of Instances cannot be smaller than k");
             SortDataByResult();
             DetectOutlier();
             SortDataByResult();
             PadData();
         }
 
-        public void Test()
+        public void Test(int knn, int kfc)
         {
-            DivideData();
+            if (knn <= 0) throw new ArgumentException("knn cannot be smaller or equal to 0");
+            if (kfc <= 0 || kfc > allInstances.Count) throw new ArgumentException("kfc cannot be smaller or equal to 0 and not bigger than the number of instances");
+            DivideData(kfc);
             ConfusionMatrix = new int[results.Count,results.Count];
-            KFCTestPackages();
+            KFCTestPackages(knn);
         }
 
         private void ReadData()
@@ -66,37 +64,17 @@ namespace KNN
             string f;
             while((f = sr.ReadLine()) != null)
             {
-                string[] attributes = f.Split(seperator.ToArray<char>());
-                if (attributes.Length <= resultposition) continue;
-                Instance i = new Instance(results.Result(attributes[resultposition]));
-                int attcount = 1;
-                for (int j = 0; j < attributes.Length; j++)
-                {
-                    if (j == resultposition) continue;
-                    double value;
-                    string attribute = attributes[j];
-                    if (!string.IsNullOrEmpty(thousandsSeperator)) attribute = attribute.Replace(thousandsSeperator, "");
-                    if (!string.IsNullOrEmpty(decimalSeperator)) attribute = attribute.Replace(decimalSeperator, ",");
-                    if (double.TryParse(attribute, out value))
-                    {
-                        i.AddAttribute(value);
-                        attcount++;
-                    }
-                    else
-                    {
-                        i.AddInvalid();
-                        attcount++;
-                    }
-                }
+                Instance i = ReadTestInstance(f);
+                if (i == null) continue;
 
                 if (attributecount == -1)
                 {
-                    attributecount = attcount;
+                    attributecount = i.Count;
                     allInstances.AddInstance(i);
                 }
                 else
                 {
-                    if (attcount == attributecount)
+                    if (i.Count == attributecount)
                     {
                         allInstances.AddInstance(i);
                     }
@@ -105,6 +83,52 @@ namespace KNN
             }
 
             sr.Close();
+        }
+
+        private Instance ReadTestInstance(string f)
+        {
+            string[] attributes = f.Split(seperator.ToArray<char>());
+            if (attributes.Length <= resultposition) return null;
+            Instance i = new Instance(results.Result(attributes[resultposition]));
+            for (int j = 0; j < attributes.Length; j++)
+            {
+                if (j == resultposition) continue;
+                double value;
+                string attribute = attributes[j];
+                if (!string.IsNullOrEmpty(thousandsSeperator)) attribute = attribute.Replace(thousandsSeperator, "");
+                if (!string.IsNullOrEmpty(decimalSeperator)) attribute = attribute.Replace(decimalSeperator, ",");
+                if (double.TryParse(attribute, out value))
+                {
+                    i.AddAttribute(value);
+                }
+                else
+                {
+                    i.AddInvalid();
+                }
+            }
+            return i;
+        }
+
+        private Instance ReadInstance(string f)
+        {
+            string[] attributes = f.Split(seperator.ToArray<char>());
+            Instance i = new Instance(-1);
+            for (int j = 0; j < attributes.Length; j++)
+            {
+                double value;
+                string attribute = attributes[j];
+                if (!string.IsNullOrEmpty(thousandsSeperator)) attribute = attribute.Replace(thousandsSeperator, "");
+                if (!string.IsNullOrEmpty(decimalSeperator)) attribute = attribute.Replace(decimalSeperator, ",");
+                if (double.TryParse(attribute, out value))
+                {
+                    i.AddAttribute(value);
+                }
+                else
+                {
+                    i.AddInvalid();
+                }
+            }
+            return i;
         }
 
         private double Average(int index, Package p)
@@ -208,7 +232,7 @@ namespace KNN
         void PadAttribute(int index, Package p)
         {
             double avg = Average(index, p);
-            Console.WriteLine("Package {0} Attribute {1}: {2}", results.Result(p.GetInstance(0).Result), index, avg);
+            Console.WriteLine("Package {0} Attribute {1} avg: {2}", results.Result(p.GetInstance(0).Result), index, avg);
             for (int i = 0; i < p.Count; i++)
             {
                 try
@@ -236,17 +260,18 @@ namespace KNN
             }
         }
 
-        void DivideData()
+        void DivideData(int kfc)
         {
-            for(int i = 0; i < k; i++)
+            for(int i = 0; i < kfc; i++)
             {
                 TestPackages.Add(new Package());
             }
             for(int i = 0; i < InstancesSortedByResult.Count; i++)
             {
+                InstancesSortedByResult[i].Randomize();
                 for(int j = 0; j < InstancesSortedByResult[i].Count; j++)
                 {
-                    TestPackages[j % k].AddInstance(InstancesSortedByResult[i].GetInstance(j));
+                    TestPackages[j % kfc].AddInstance(InstancesSortedByResult[i].GetInstance(j));
                 }
             }
         }
@@ -262,16 +287,16 @@ namespace KNN
             return Math.Sqrt(sum);
         }
 
-        void KFCTestPackages()
+        void KFCTestPackages(int knn)
         {
             for(int i = 0; i < TestPackages.Count; i++)
             {
                 List<Package> ToLearn = TestPackages.Except(new List<Package>() { TestPackages.ElementAt(i) }).ToList<Package>();
-                TestPackage(ToLearn, TestPackages[i]);
+                TestPackage(ToLearn, TestPackages[i], knn);
             }
         }
 
-        void TestPackage(List<Package> tl, Package tt)
+        void TestPackage(List<Package> tl, Package tt, int knn)
         {
             Package p = new Package();
             for (int i = 0; i < tl.Count; i++)
@@ -282,12 +307,18 @@ namespace KNN
 
             for(int i = 0; i < tt.Count; i++)
             {
-                int y = Classify(tt.GetInstance(i), p);
+                int y = Classify(tt.GetInstance(i), p, knn);
                 ConfusionMatrix[tt.GetInstance(i).Result, y]++;
             }
         }
 
-        int Classify(Instance i, Package p)
+        public string Classify(string s, int knn)
+        {
+            Instance i = ReadInstance(s);
+            return results.Result(Classify(i, allInstances, knn));
+        }
+
+        int Classify(Instance i, Package p, int knn)
         {
             Dictionary<Instance, double> Distances = new Dictionary<Instance, double>();
             for(int j = 0; j < p.Count; j++)
@@ -297,9 +328,17 @@ namespace KNN
 
             List<Instance> Sorted = (from entry in Distances orderby entry.Value ascending select entry.Key).ToList<Instance>();
             int[] ResultCount = new int[results.Count];
-            for(int j = 0; j < k; j++)
+            for(int j = 0; j < knn; j++)
             {
-                ResultCount[Sorted.ElementAt(j).Result]++;
+                try
+                {
+                    ResultCount[Sorted.ElementAt(j).Result]++;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    break;
+                }
+                
             }
 
             int Max = ResultCount.Max();
@@ -321,14 +360,23 @@ namespace KNN
 
         public void DisplayConfusionMatrix()
         {
-            for(int i = 0; i < results.Count; i++)
+            double sum = 0;
+            double correct = 0;
+            Console.WriteLine("\nConfusion Matrix:");
+            for (int i = 0; i < results.Count; i++)
             {
                 for(int j = 0; j < results.Count; j++)
                 {
                     Console.Write("{0} ", ConfusionMatrix[i,j]);
+                    if (i == j) correct += ConfusionMatrix[i, j];
+                    sum += ConfusionMatrix[i, j];
                 }
                 Console.WriteLine("");
             }
+
+            Console.WriteLine("");
+            double acc = correct / sum;
+            Console.WriteLine("Accuracy: {0}", acc);
         }
     }
 }

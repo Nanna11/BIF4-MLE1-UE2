@@ -47,6 +47,16 @@ namespace KNN
             }
         }
 
+        public void Randomize()
+        {
+            int size = _instances.Count;
+            Random Rand = new Random();
+            _instances = new LinkedList<Instance>(_instances.OrderBy((o) =>
+            {
+                return (Rand.Next() % size);
+            }));
+        }
+
         static public Package Concat(Package i, Package j)
         {
             Package p = new Package();
