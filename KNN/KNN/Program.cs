@@ -13,7 +13,7 @@ namespace KNN
         {
             Stopwatch s = new Stopwatch();
             s.Start();
-            knn k = new knn("winequality-white.csv", ";", 11, true, 2, ",");
+            knn k = new knn("winequality-white.csv", ";", 11, true, 2, ".");
             Console.WriteLine("\nTime for initialization: {0}", s.Elapsed);
             s.Restart();
             k.Test(12,10);

@@ -38,9 +38,9 @@ namespace KNN
 
             ReadData();
             SortDataByResult();
+            PadData();
             DetectOutlier();
             SortDataByResult();
-            PadData();
         }
 
         public void Test(int knn, int kfc)
@@ -358,8 +358,15 @@ namespace KNN
             
         }
 
+
+
         public void DisplayConfusionMatrix()
         {
+            if(ConfusionMatrix == null)
+            {
+                Console.WriteLine("No KFC test has been done yet");
+                return;
+            }
             double sum = 0;
             double correct = 0;
             Console.WriteLine("\nConfusion Matrix:");
