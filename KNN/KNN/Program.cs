@@ -11,35 +11,35 @@ namespace KNN
     {
         static void Main(string[] args)
         {
-            //Console.WriteLine("**********************");
-            //Console.WriteLine("       Iris Data      ");
-            //Console.WriteLine("**********************");
+            Console.WriteLine("**********************");
+            Console.WriteLine("       Iris Data      ");
+            Console.WriteLine("**********************");
             Stopwatch s = new Stopwatch();
-            //s.Start();
-            //knn k = new knn("bezdekIris.data", " ", 4, false, 2.5, ",");
-            //Console.WriteLine("\nTime for initialization: {0}", s.Elapsed);
-            //s.Restart();
-            //k.Test(10, 10);
-            //Console.WriteLine("\nTime for Testpackages: {0}", s.Elapsed);
-            //k.DisplayConfusionMatrix();
-            //s.Restart();
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    k.Classify("5,1 3,5 1,4 0,2", 10);
-            //}
-            //Console.WriteLine("\nTime for 100 classifications: {0}", s.Elapsed);
-            //s.Restart();
-            //for (int i = 0; i < 1000; i++)
-            //{
-            //    k.Classify("5,1 3,5 1,4 0,2", 10);
-            //}
-            //Console.WriteLine("\nTime for 1000 classifications: {0}", s.Elapsed);
-            //s.Restart();
-            //for (int i = 0; i < 10000; i++)
-            //{
-            //    k.Classify("5,1 3,5 1,4 0,2", 10);
-            //}
-            //Console.WriteLine("\nTime for 10000 classifications: {0}", s.Elapsed);
+            s.Start();
+            knn k = new knn("bezdekIris.data", " ", 4, false, 2.5, ",");
+            Console.WriteLine("\nTime for initialization: {0}", s.Elapsed);
+            s.Restart();
+            k.Test(10, 10);
+            Console.WriteLine("\nTime for Testpackages: {0}", s.Elapsed);
+            k.DisplayConfusionMatrix();
+            s.Restart();
+            for (int i = 0; i < 100; i++)
+            {
+                k.Classify("5,1 3,5 1,4 0,2", 10);
+            }
+            Console.WriteLine("\nTime for 100 classifications: {0}", s.Elapsed);
+            s.Restart();
+            for (int i = 0; i < 1000; i++)
+            {
+                k.Classify("5,1 3,5 1,4 0,2", 10);
+            }
+            Console.WriteLine("\nTime for 1000 classifications: {0}", s.Elapsed);
+            s.Restart();
+            for (int i = 0; i < 10000; i++)
+            {
+                k.Classify("5,1 3,5 1,4 0,2", 10);
+            }
+            Console.WriteLine("\nTime for 10000 classifications: {0}", s.Elapsed);
 
 
             Console.WriteLine("\n\n\n**********************");
