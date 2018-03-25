@@ -42,6 +42,8 @@ namespace KNN
             Console.WriteLine("\nTime for 10000 classifications: {0}", s.Elapsed);
 
 
+
+
             Console.WriteLine("\n\n\n**********************");
             Console.WriteLine("       Wine Data      ");
             Console.WriteLine("**********************");
