@@ -72,5 +72,13 @@ namespace KNN
 
             return p;
         }
+
+        public void NormalizeAttribute(int index, double med, double stddeviation)
+        {
+            foreach(Instance i in _instances)
+            {
+                i.NormalizeAttribute(index, med, stddeviation);
+            }
+        }
     }
 }

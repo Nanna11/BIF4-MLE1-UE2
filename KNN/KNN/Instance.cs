@@ -10,6 +10,8 @@ namespace KNN
     {
         LinkedList<double> _attributes = new LinkedList<double>();
         Dictionary<int, LinkedListNode<double>> _invalidattributes = new Dictionary<int, LinkedListNode<double>>();
+        Dictionary<int, LinkedListNode<double>> _attributenodes = new Dictionary<int, LinkedListNode<double>>();
+
         int _result;
 
         public Instance(int result)
@@ -19,7 +21,7 @@ namespace KNN
 
         public void AddAttribute(double value)
         {
-            _attributes.AddLast(value);
+            _attributenodes.Add(_attributes.Count, _attributes.AddLast(value));
         }
 
         public double GetAttribute(int index)
@@ -44,7 +46,7 @@ namespace KNN
         {
             if (_invalidattributes.ContainsKey(index))
             {
-                _attributes.AddAfter(_invalidattributes[index], value);
+                _attributenodes[index] = _attributes.AddAfter(_invalidattributes[index], value);
                 _attributes.Remove(_invalidattributes[index]);
                 _invalidattributes.Remove(index);
             }
@@ -53,6 +55,7 @@ namespace KNN
         public void AddInvalid()
         {
             _invalidattributes.Add(_attributes.Count, _attributes.AddLast(0));
+            _attributenodes.Add(_attributes.Count - 1, _invalidattributes[_attributes.Count - 1]);
         }
 
         public int Result
@@ -78,6 +81,14 @@ namespace KNN
                 if (_invalidattributes.Count == 0) return true;
                 else return false;
             }
+        }
+
+        public void NormalizeAttribute(int index, double med, double stddeviation)
+        {
+            double value = (_attributes.ElementAt(index) - med) / stddeviation;
+            LinkedListNode<double> ToDelete = _attributenodes[index];
+            _attributenodes[index] = _attributes.AddAfter(_attributenodes[index], value);
+            _attributes.Remove(ToDelete);
         }
     }
 }

@@ -20,8 +20,11 @@ namespace KNN
 
         Results results = new Results();
         Package allInstances = new Package();
+        Package Outliers = new Package();
         Dictionary<int, Package> InstancesSortedByResult = new Dictionary<int, Package>();
         List<Package> TestPackages = new List<Package>();
+        List<Double> StdDeviation = new List<double>();
+        List<Double> Avgs = new List<double>();
         int[,] ConfusionMatrix;
 
         public knn(string Filename, string Seperator, int Resultposition, bool hasHeading = false, double OutlierStrictness = 2, string DecimalSeperator = ",", string ThousandsSeperator = "")
@@ -37,9 +40,12 @@ namespace KNN
             thousandsSeperator = ThousandsSeperator;
 
             ReadData();
+            Statistics();
+            NormalizeData();
             SortDataByResult();
             PadData();
             DetectOutlier();
+            Statistics();
             SortDataByResult();
         }
 
@@ -172,14 +178,15 @@ namespace KNN
             allInstances.Clear();
             for (int i = 0; i < InstancesSortedByResult.Count; i++)
             {
-                DetectOutlierPerPackage(i, InstancesSortedByResult[i]);
+                Outliers = Package.Concat(Outliers, DetectOutlierPerPackage(i, InstancesSortedByResult[i]));
             }
         }
 
-        private void DetectOutlierPerPackage(int pNr, Package p)
+        private Package DetectOutlierPerPackage(int pNr, Package p)
         {
             Dictionary<int, double> avg = new Dictionary<int, double>();
             Dictionary<int, double> devi = new Dictionary<int, double>();
+            Package Outliers = new Package();
 
             for (int i = 0; i < p.Count; i++)
             {
@@ -210,11 +217,17 @@ namespace KNN
                 {
                     allInstances.AddInstance(instance);
                 }
+                else
+                {
+                    Outliers.AddInstance(instance);
+                }
             }
+            return Outliers;
         }
 
         void PadData()
         {
+            //allInstances.Clear();
             for(int i = 0; i < InstancesSortedByResult.Count; i++)
             {
                 PadPackage(InstancesSortedByResult[i]);
@@ -227,6 +240,10 @@ namespace KNN
             {
                 PadAttribute(i, p);
             }
+            //for(int i = 0; i < p.Count; i++)
+            //{
+            //    allInstances.AddInstance(p.GetInstance(i));
+            //}
         }
 
         void PadAttribute(int index, Package p)
@@ -235,14 +252,7 @@ namespace KNN
             Console.WriteLine("Package {0} Attribute {1} avg: {2}", results.Result(p.GetInstance(0).Result), index, avg);
             for (int i = 0; i < p.Count; i++)
             {
-                try
-                {
-                    p.GetInstance(i).ReviseAttribute(index, avg);
-                }
-                catch (CorrectAttributeCannotBeCorrectedException)
-                {
-                    continue;
-                }
+                p.GetInstance(i).ReviseAttribute(index, avg);
             }
         }
 
@@ -294,6 +304,18 @@ namespace KNN
                 List<Package> ToLearn = TestPackages.Except(new List<Package>() { TestPackages.ElementAt(i) }).ToList<Package>();
                 TestPackage(ToLearn, TestPackages[i], knn);
             }
+            TestPackage(allInstances, Outliers, knn);
+        }
+
+        void TestPackage(Package p, Package tt, int knn)
+        {
+
+
+            for (int i = 0; i < tt.Count; i++)
+            {
+                int y = Classify(tt.GetInstance(i), p, knn);
+                ConfusionMatrix[tt.GetInstance(i).Result, y]++;
+            }
         }
 
         void TestPackage(List<Package> tl, Package tt, int knn)
@@ -315,6 +337,10 @@ namespace KNN
         public string Classify(string s, int knn)
         {
             Instance i = ReadInstance(s);
+            for(int j = 0; j < i.Count; j++)
+            {
+                i.NormalizeAttribute(j, Avgs[j], StdDeviation[j]);
+            }
             return results.Result(Classify(i, allInstances, knn));
         }
 
@@ -385,5 +411,24 @@ namespace KNN
             double acc = correct / sum;
             Console.WriteLine("Accuracy: {0}", acc);
         }
+
+        private void NormalizeData()
+        {
+            for(int i = 0; i < allInstances.GetInstance(0).Count; i++)
+            {
+                allInstances.NormalizeAttribute(i, Avgs[i], StdDeviation[i]);
+            }
+        }
+
+        private void Statistics()
+        {
+            Avgs.Clear();
+            StdDeviation.Clear();
+            for(int i = 0; i<allInstances.GetInstance(0).Count; i++)
+            {
+                Avgs.Add(Average(i, allInstances));
+                StdDeviation.Add(StandardDeviation(i, allInstances));
+            }
+}
     }
 }
