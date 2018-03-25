@@ -59,15 +59,19 @@ namespace KNN
 
         private void ReadData()
         {
+            //gets path of file with dataset
             string deploypath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string filepath = Path.Combine(deploypath, filename);
             FileStream file = new FileStream(filepath, FileMode.Open); //ADD ERRORHANDLING HERE!!!!
             StreamReader sr = new StreamReader(file);
-            if (hasheading) sr.ReadLine(); //read and discard headingline if necessary
+            //read and discard headingline if necessary
+            if (hasheading) sr.ReadLine();
 
+            //number of valid attributes inculding result
             int attributecount = -1; //number of valid attributes inculding result
             string f;
-            while((f = sr.ReadLine()) != null)
+            //reads one instance per line and adds it to list if instance has all attributes
+            while ((f = sr.ReadLine()) != null)
             {
                 Instance i = ReadTestInstance(f);
                 if (i == null) continue;
@@ -92,16 +96,21 @@ namespace KNN
 
         private Instance ReadTestInstance(string f)
         {
+            //getting string array filled with attributes of instance  
             string[] attributes = f.Split(seperator.ToArray<char>());
+            //instance that has less attributes than normal get dumped
             if (attributes.Length <= resultposition) return null;
+            //creates new Instance with index of given result
             Instance i = new Instance(results.Result(attributes[resultposition]));
             for (int j = 0; j < attributes.Length; j++)
             {
                 if (j == resultposition) continue;
                 double value;
                 string attribute = attributes[j];
+                //replaces thousand and decimal seperator if given
                 if (!string.IsNullOrEmpty(thousandsSeperator)) attribute = attribute.Replace(thousandsSeperator, "");
                 if (!string.IsNullOrEmpty(decimalSeperator)) attribute = attribute.Replace(decimalSeperator, ",");
+                //trys to parse value, depending on result adds it to attributes or invalid
                 if (double.TryParse(attribute, out value))
                 {
                     i.AddAttribute(value);
@@ -116,14 +125,18 @@ namespace KNN
 
         private Instance ReadInstance(string f)
         {
+            //getting string array filled with attributes of instance 
             string[] attributes = f.Split(seperator.ToArray<char>());
+            //creates new Instance with index of -1
             Instance i = new Instance(-1);
             for (int j = 0; j < attributes.Length; j++)
             {
                 double value;
                 string attribute = attributes[j];
+                //replaces thousand and decimal seperator if given
                 if (!string.IsNullOrEmpty(thousandsSeperator)) attribute = attribute.Replace(thousandsSeperator, "");
                 if (!string.IsNullOrEmpty(decimalSeperator)) attribute = attribute.Replace(decimalSeperator, ",");
+                //trys to parse value, depending on result adds it to attributes or invalid
                 if (double.TryParse(attribute, out value))
                 {
                     i.AddAttribute(value);
