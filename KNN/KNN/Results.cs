@@ -12,12 +12,15 @@ namespace KNN
         Dictionary<string, int> _inverseresults = new Dictionary<string, int>();
         int index = 0;
 
+        //convert and save string into corresponding int value
         public int Result(string value)
         {
             if (value == null) throw new ResultCannotBeNullException();
+            //return int if already existing
             if (_inverseresults.ContainsKey(value)) return _inverseresults[value];
             else
             {
+                //generate new value if not already existing
                 _results.Add(index, value);
                 _inverseresults.Add(value, index);
                 index++;
@@ -25,6 +28,7 @@ namespace KNN
             }
         }
 
+        //convert int value back to string result
         public string Result(int value)
         {
             if (_results.ContainsKey(value)) return _results[value];

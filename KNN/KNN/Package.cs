@@ -9,20 +9,24 @@ namespace KNN
     class Package
     {
         LinkedList<Instance> _instances = new LinkedList<Instance>();
+        //nodes need to be saved because otherwise they cannot be removed from linked lsit
         LinkedList<LinkedListNode<Instance>> _instanceNodes = new LinkedList<LinkedListNode<Instance>>();
 
+        //add a new instance
         public void AddInstance(Instance i)
         {
             _instances.AddLast(i);
             _instanceNodes.AddLast(_instances.Last);
         }
 
+        //return instance at index i
         public Instance GetInstance(int i)
         {
             if (i < _instances.Count) return _instances.ElementAt(i);
             else throw new InstanceDoesNotExistException();
         }
 
+        //delete instance at index i
         public void DeleteInstance(int i)
         {
             if (i < _instances.Count)
@@ -33,6 +37,7 @@ namespace KNN
             else throw new InstanceDoesNotExistException();
         }
 
+        //clear list of instances
         public void Clear()
         {
             _instances.Clear();
@@ -47,6 +52,7 @@ namespace KNN
             }
         }
 
+        //randomize the order of instances in this package
         public void Randomize()
         {
             int size = _instances.Count;
@@ -57,6 +63,7 @@ namespace KNN
             }));
         }
 
+        //mere instances of two packages into a new one
         static public Package Concat(Package i, Package j)
         {
             Package p = new Package();
@@ -73,6 +80,18 @@ namespace KNN
             return p;
         }
 
+        //mere instances of multiple packages into a new one
+        public static Package Concat(IEnumerable<Package> tl)
+        {
+            Package p = new Package();
+            for (int i = 0; i < tl.Count(); i++)
+            {
+                p = Package.Concat(p, tl.ElementAt(i));
+            }
+            return p;
+        }
+
+        //normalize attribute number index in every instance of package
         public void NormalizeAttribute(int index, double med, double stddeviation)
         {
             foreach(Instance i in _instances)

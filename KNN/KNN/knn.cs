@@ -46,7 +46,6 @@ namespace KNN
             PadData();
             DetectOutlier();
             Statistics();
-            SortDataByResult();
         }
 
         public void Test(int knn, int kfc)
@@ -137,6 +136,7 @@ namespace KNN
             return i;
         }
 
+        //returns arithmetic mean of attribute number "index" for all instances in Package
         private double Average(int index, Package p)
         {
             double sum = 0;
@@ -159,6 +159,7 @@ namespace KNN
             else return 0;
         }
 
+        //returns arithmetic mean of attribute number "index" for all instances in Package
         private double StandardDeviation(int index, Package p)
         {
             double avg = Average(index, p);
@@ -173,27 +174,35 @@ namespace KNN
             else return Math.Sqrt(differentialsum / (p.Count - 1));
         }
 
+        //Sorts out Outliers
+        //Outliers get removed from all packages and are put into Outliers package
         private void DetectOutlier()
         {
             allInstances.Clear();
             for (int i = 0; i < InstancesSortedByResult.Count; i++)
             {
-                Outliers = Package.Concat(Outliers, DetectOutlierPerPackage(i, InstancesSortedByResult[i]));
+                DetectOutlierPerPackage(InstancesSortedByResult[i]);
             }
+            //sort data so outliers are removed from sorted packages too
+            SortDataByResult();
         }
 
-        private Package DetectOutlierPerPackage(int pNr, Package p)
+        //Sorts out outliers from Package that should contain only Instances with same results
+        //Instances with attributes that differ from the attribute-mean of this package more than "strict"-times the standard deviation are removed
+        private void DetectOutlierPerPackage(Package p)
         {
             Dictionary<int, double> avg = new Dictionary<int, double>();
             Dictionary<int, double> devi = new Dictionary<int, double>();
-            Package Outliers = new Package();
 
+            //check for every instance in package
             for (int i = 0; i < p.Count; i++)
             {
                 Instance instance = p.GetInstance(i);
                 bool ok = true;
+                //check for each attribute of this instance
                 for (int iatt = 0; iatt < instance.Count; iatt++)
                 {
+                    //calculate avg and standard deviation only if not already calculated yet
                     if (!avg.ContainsKey(iatt) || !devi.ContainsKey(iatt))
                     {
                         double average = Average(iatt, p);
@@ -203,6 +212,7 @@ namespace KNN
                     }
 
                     double attr = instance.GetAttribute(iatt);
+                    //check if outlier
                     if (attr < (avg[iatt] + (devi[iatt] * strict)) && attr > (avg[iatt] - (devi[iatt] * strict)))
                     {
                         ok = true;
@@ -213,49 +223,54 @@ namespace KNN
                         break;
                     }
                 }
+ 
                 if (ok)
                 {
+                    //add instance again to allInstances if no outlier
                     allInstances.AddInstance(instance);
                 }
                 else
                 {
+                    //add Instance to Outlier Package if it is an outlier
                     Outliers.AddInstance(instance);
                 }
             }
-            return Outliers;
         }
 
         void PadData()
         {
-            //allInstances.Clear();
+            //Pad Data seperated by sorted by result packages
             for(int i = 0; i < InstancesSortedByResult.Count; i++)
             {
                 PadPackage(InstancesSortedByResult[i]);
             }
         }
 
+        //Pad every attribute in every instance of package
         void PadPackage(Package p)
         {
+            //number of attributes retrieved from allInstances because all instances forced to have same number of attributes before
             for (int i = 0; i < allInstances.GetInstance(0).Count; i++)
             {
                 PadAttribute(i, p);
             }
-            //for(int i = 0; i < p.Count; i++)
-            //{
-            //    allInstances.AddInstance(p.GetInstance(i));
-            //}
         }
 
+        //Pad attribute number index in all instances of package p
         void PadAttribute(int index, Package p)
         {
+            //calculate average of attribute over all instances of package
             double avg = Average(index, p);
             Console.WriteLine("Package {0} Attribute {1} avg: {2}", results.Result(p.GetInstance(0).Result), index, avg);
             for (int i = 0; i < p.Count; i++)
             {
+                //try to correct attribute
+                //class instance itself takes care of the case that attribute is already correct
                 p.GetInstance(i).ReviseAttribute(index, avg);
             }
         }
 
+        //serperates instances from allInstances into seperate packages depending on their result
         void SortDataByResult()
         {
             if (InstancesSortedByResult.Any()) InstancesSortedByResult.Clear();
@@ -270,6 +285,7 @@ namespace KNN
             }
         }
 
+        //divides all instances contained in InstancesSortedByResult into kfc disjoint Packages
         void DivideData(int kfc)
         {
             for(int i = 0; i < kfc; i++)
@@ -278,14 +294,17 @@ namespace KNN
             }
             for(int i = 0; i < InstancesSortedByResult.Count; i++)
             {
+                //randomize order of instances in package to remove any order present when read from file
                 InstancesSortedByResult[i].Randomize();
                 for(int j = 0; j < InstancesSortedByResult[i].Count; j++)
                 {
+                    //distribute instances with same result equally to testpackages
                     TestPackages[j % kfc].AddInstance(InstancesSortedByResult[i].GetInstance(j));
                 }
             }
         }
 
+        //calculates euclidean distance between two instances
         double EuclideanDistance(Instance i, Instance j)
         {
             double sum = 0;
@@ -297,76 +316,75 @@ namespace KNN
             return Math.Sqrt(sum);
         }
 
+        //k-fold-cross test all packages in TestPackages
+        //additionally test ptotential outliers that were sorted out before
         void KFCTestPackages(int knn)
         {
             for(int i = 0; i < TestPackages.Count; i++)
             {
+                //put all packages except for the one currently being tested into a new list of packages
                 List<Package> ToLearn = TestPackages.Except(new List<Package>() { TestPackages.ElementAt(i) }).ToList<Package>();
-                TestPackage(ToLearn, TestPackages[i], knn);
+                Package p = Package.Concat(ToLearn);
+                TestPackage(p, TestPackages[i], knn);
             }
             TestPackage(allInstances, Outliers, knn);
         }
 
+        //test the package tt with the data from p being used to learn
         void TestPackage(Package p, Package tt, int knn)
         {
-
-
             for (int i = 0; i < tt.Count; i++)
             {
                 int y = Classify(tt.GetInstance(i), p, knn);
+                //add 1 to field in confusion matrix depending on the actual and the calculated result
                 ConfusionMatrix[tt.GetInstance(i).Result, y]++;
             }
         }
 
-        void TestPackage(List<Package> tl, Package tt, int knn)
-        {
-            Package p = new Package();
-            for (int i = 0; i < tl.Count; i++)
-            {
-                p = Package.Concat(p, tl[i]);
-            }
-
-
-            for(int i = 0; i < tt.Count; i++)
-            {
-                int y = Classify(tt.GetInstance(i), p, knn);
-                ConfusionMatrix[tt.GetInstance(i).Result, y]++;
-            }
-        }
-
+        //Classify an instance that is represented by a string similar to the one that was read for learning data
         public string Classify(string s, int knn)
         {
             Instance i = ReadInstance(s);
+            //normalize each attribute of the instance so it can be compared to learnig data
             for(int j = 0; j < i.Count; j++)
             {
                 i.NormalizeAttribute(j, Avgs[j], StdDeviation[j]);
             }
+            //return result string based on classification
             return results.Result(Classify(i, allInstances, knn));
         }
 
+        //classify an instance using the data in package p for learning, considering the knn nearest neighbours
         int Classify(Instance i, Package p, int knn)
         {
             Dictionary<Instance, double> Distances = new Dictionary<Instance, double>();
+            //save the euclidean distance between the instance i and every instance of p
             for(int j = 0; j < p.Count; j++)
             {
                 Distances.Add(p.GetInstance(j), EuclideanDistance(i, p.GetInstance(j)));
             }
 
+            //sort the distances list by distance ascendening
             List<Instance> Sorted = (from entry in Distances orderby entry.Value ascending select entry.Key).ToList<Instance>();
             int[] ResultCount = new int[results.Count];
+            //evaluate the first knn Instances with smallest distance
             for(int j = 0; j < knn; j++)
             {
                 try
                 {
+                    //count number of occurences of results
                     ResultCount[Sorted.ElementAt(j).Result]++;
                 }
                 catch (ArgumentOutOfRangeException)
                 {
+                    //in case that there were less than knn packages in p
                     break;
                 }
                 
             }
 
+            //make sure that if more than one result was the most common not, it does not depend on the order 
+            //in which the results were read, which value is returned
             int Max = ResultCount.Max();
             List<int> HighestResultCounts = new List<int>();
             for(int j = 0; j < ResultCount.Length; j++)
@@ -385,7 +403,7 @@ namespace KNN
         }
 
 
-
+        //display confusion matrix and accuracy
         public void DisplayConfusionMatrix()
         {
             if(ConfusionMatrix == null)
@@ -401,6 +419,7 @@ namespace KNN
                 for(int j = 0; j < results.Count; j++)
                 {
                     Console.Write("{0} ", ConfusionMatrix[i,j]);
+                    //add to correct count if actual and calculated result were the same
                     if (i == j) correct += ConfusionMatrix[i, j];
                     sum += ConfusionMatrix[i, j];
                 }
@@ -408,18 +427,22 @@ namespace KNN
             }
 
             Console.WriteLine("");
+            //calculate accuracy
             double acc = correct / sum;
             Console.WriteLine("Accuracy: {0}", acc);
         }
 
+        //normalize every instance so all attributes weigh equally
         private void NormalizeData()
         {
+            //normalize evera attribute in allInstances
             for(int i = 0; i < allInstances.GetInstance(0).Count; i++)
             {
                 allInstances.NormalizeAttribute(i, Avgs[i], StdDeviation[i]);
             }
         }
 
+        //calcualte mean an standard deviation for all attributes and save them to list so they dont have to be calculated every time
         private void Statistics()
         {
             Avgs.Clear();
